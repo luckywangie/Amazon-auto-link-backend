@@ -5,10 +5,10 @@ from werkzeug.security import generate_password_hash
 def seed_data():
     with app.app_context():
         # Create Admin User
-        if not User.query.filter_by(email="admin@amazonautolink.com").first():
+        if not User.query.filter_by(email="admin@gmail.com").first():
             admin = User(
                 name="Admin",
-                email="admin@amazonautolink.com",
+                email="admin@gmail.com.com",
                 password_hash=generate_password_hash("admin123"),
                 is_admin=True
             )
