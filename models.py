@@ -9,7 +9,6 @@ class TokenBlocklist(db.Model):
     jti = db.Column(db.String(256), nullable=False, index=True)
     created_at = db.Column(db.DateTime, nullable=False)
 
-
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), nullable=False)
@@ -41,6 +40,7 @@ class Vehicle(db.Model):
     description = db.Column(db.Text, nullable=False)
     price = db.Column(db.Float, nullable=False)
     availability = db.Column(db.Boolean, default=True)
+    image_url = db.Column(db.String(255))  # ✅ Added image_url field
     category_id = db.Column(db.Integer, db.ForeignKey('category.id'), nullable=False)
     bookings = db.relationship('Booking', backref='vehicle', lazy=True)
 
@@ -57,7 +57,7 @@ class Booking(db.Model):
     phone = db.Column(db.String(20), nullable=False)
     email = db.Column(db.String(128), nullable=False)
     id_number = db.Column(db.String(50), nullable=False)
-    driving_license = db.Column(db.String(50), nullable=False)  # New field
+    driving_license = db.Column(db.String(50), nullable=False)  # ✅ Already added
     pickup_option = db.Column(db.String(20), nullable=False)  # 'pickup' or 'delivery'
     delivery_address = db.Column(db.String(255))
     need_driver = db.Column(db.Boolean, default=False)
@@ -66,5 +66,5 @@ class Booking(db.Model):
     status = db.Column(db.String(50), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def _repr_(self):
+    def __repr__(self):  # ✅ Fixed typo from _repr_ to __repr__
         return f"<Booking {self.id}>"
