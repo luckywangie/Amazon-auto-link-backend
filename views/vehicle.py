@@ -37,7 +37,8 @@ def get_vehicles():
         'description': v.description,
         'price': v.price,
         'availability': v.availability,
-        'category': v.category.name if v.category else None
+        'category': v.category.name if v.category else None,
+        'image_url': v.image_url  # Added image_url field
     } for v in vehicles]), 200
 
 
@@ -54,7 +55,8 @@ def get_vehicle(vehicle_id):
         'description': vehicle.description,
         'price': vehicle.price,
         'availability': vehicle.availability,
-        'category': vehicle.category.name if vehicle.category else None
+        'category': vehicle.category.name if vehicle.category else None,
+        'image_url': vehicle.image_url  # Added image_url field
     }), 200
 
 
@@ -80,7 +82,8 @@ def add_vehicle():
         description=data['description'],
         price=data['price'],
         availability=data.get('availability', True),
-        category_id=data['category_id']
+        category_id=data['category_id'],
+        image_url=data.get('image_url')  # Added image_url field
     )
     db.session.add(vehicle)
     db.session.commit()
@@ -107,6 +110,7 @@ def update_vehicle(vehicle_id):
     vehicle.price = data.get('price', vehicle.price)
     vehicle.availability = data.get('availability', vehicle.availability)
     vehicle.category_id = data.get('category_id', vehicle.category_id)
+    vehicle.image_url = data.get('image_url', vehicle.image_url)  # Added image_url field
 
     db.session.commit()
     return jsonify({'message': 'Vehicle updated successfully'}), 200

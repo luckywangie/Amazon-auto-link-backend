@@ -53,8 +53,18 @@ class Booking(db.Model):
     vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id'), nullable=False)
     start_date = db.Column(db.Date, nullable=False)
     end_date = db.Column(db.Date, nullable=False)
+    full_name = db.Column(db.String(128), nullable=False)
+    phone = db.Column(db.String(20), nullable=False)
+    email = db.Column(db.String(128), nullable=False)
+    id_number = db.Column(db.String(50), nullable=False)
+    driving_license = db.Column(db.String(50), nullable=False)  # New field
+    pickup_option = db.Column(db.String(20), nullable=False)  # 'pickup' or 'delivery'
+    delivery_address = db.Column(db.String(255))
+    need_driver = db.Column(db.Boolean, default=False)
+    special_requests = db.Column(db.Text)
+    payment_method = db.Column(db.String(50), nullable=False)
     status = db.Column(db.String(50), default='pending')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def __repr__(self):
-        return f"<Booking {self.id} - User {self.user_id}>"
+    def _repr_(self):
+        return f"<Booking {self.id}>"
