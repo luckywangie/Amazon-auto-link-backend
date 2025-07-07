@@ -89,10 +89,20 @@ def create_booking():
         payment_method=payment_method,
         status='pending'
     )
-    db.session.add(new_booking)
-    db.session.commit()
-
-    return jsonify({'message': 'Booking request submitted'}), 201
+    
+    try:
+        db.session.add(new_booking)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Booking request submitted successfully',
+            'booking_id': new_booking.id,
+            'status': 'pending'
+        }), 201
+        
+    except Exception as e:  # noqa: F841
+        db.session.rollback()
+        return jsonify({'error': 'Failed to create booking. Please try again.'}), 500
 
 
 # ✅ User: View own bookings
