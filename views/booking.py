@@ -1,15 +1,57 @@
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_cors import cross_origin
 from models import db, Booking, Vehicle, User
+from views.firebase_config import verify_firebase_token
 from datetime import datetime
 import logging
+from functools import wraps
 
 booking_bp = Blueprint('booking_bp', __name__)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+def firebase_auth_required(f):
+    """Custom decorator for Firebase authentication"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return jsonify({'error': 'No authorization header'}), 401
+        
+        try:
+            # Extract token from "Bearer <token>"
+            token = auth_header.split(' ')[1]
+            decoded_token = verify_firebase_token(token)
+            
+            if not decoded_token:
+                return jsonify({'error': 'Invalid token'}), 401
+            
+            # Get or create user based on Firebase UID
+            firebase_uid = decoded_token['uid']
+            user = User.query.filter_by(firebase_uid=firebase_uid).first()
+            
+            if not user:
+                # Create user if doesn't exist
+                user = User(
+                    firebase_uid=firebase_uid,
+                    name=decoded_token.get('name', ''),
+                    email=decoded_token.get('email', ''),
+                    is_admin=False
+                )
+                db.session.add(user)
+                db.session.commit()
+            
+            # Add user to request context
+            request.current_user = user
+            
+        except Exception as e:
+            logger.error(f"Authentication error: {str(e)}")
+            return jsonify({'error': 'Authentication failed'}), 401
+        
+        return f(*args, **kwargs)
+    return decorated_function
 
 @booking_bp.before_request
 def handle_preflight():
@@ -22,14 +64,13 @@ def handle_preflight():
 
 @booking_bp.route('/', methods=['POST', 'OPTIONS'])
 @cross_origin()
-@jwt_required()
+@firebase_auth_required
 def create_booking():
     try:
-        user_id = get_jwt_identity()
-        user = User.query.get(user_id)
+        user = request.current_user
         
         if not user:
-            logger.error(f"User not found with ID: {user_id}")
+            logger.error("User not found in request context")
             return jsonify({'error': 'User not found'}), 404
 
         data = request.get_json()
@@ -93,7 +134,7 @@ def create_booking():
             payment_method=data['payment_method'],
             total_price=data['total_price'],
             driver_fee=data.get('driver_fee', 0),
-            status='pending'
+            booking_status='pending'  # Use booking_status instead of status
         )
 
         db.session.add(new_booking)
@@ -114,33 +155,32 @@ def create_booking():
 
 @booking_bp.route('/my', methods=['GET'])
 @cross_origin()
-@jwt_required()
+@firebase_auth_required
 def get_my_bookings():
-    user_id = get_jwt_identity()
-    bookings = Booking.query.filter_by(user_id=user_id).all()
+    user = request.current_user
+    bookings = Booking.query.filter_by(user_id=user.id).all()
     return jsonify([
         {
             'id': b.id,
             'vehicle': b.vehicle.name,
             'start_date': b.start_date.isoformat(),
             'end_date': b.end_date.isoformat(),
-            'status': b.status,
+            'status': b.booking_status,
             'full_name': b.full_name,
             'phone': b.phone,
             'pickup_option': b.pickup_option,
             'need_driver': b.need_driver,
-            'payment_method': b.payment_method
+            'payment_method': b.payment_method,
+            'total_price': b.total_price
         } for b in bookings
     ]), 200
 
-
-# ✅ User: Cancel a booking
 @booking_bp.route('/<int:booking_id>/cancel', methods=['PATCH'])
 @cross_origin()
-@jwt_required()
+@firebase_auth_required
 def cancel_booking(booking_id):
-    user_id = get_jwt_identity()
-    booking = Booking.query.filter_by(id=booking_id, user_id=user_id).first()
+    user = request.current_user
+    booking = Booking.query.filter_by(id=booking_id, user_id=user.id).first()
 
     if not booking:
         return jsonify({'error': 'Booking not found or unauthorized'}), 404
@@ -148,18 +188,15 @@ def cancel_booking(booking_id):
     if datetime.utcnow().date() >= booking.start_date:
         return jsonify({'error': 'Cannot cancel after start date'}), 400
 
-    booking.status = 'cancelled'
+    booking.booking_status = 'cancelled'
     db.session.commit()
     return jsonify({'message': 'Booking cancelled'}), 200
 
-
-# ✅ Admin: View all bookings
 @booking_bp.route('/', methods=['GET'])
 @cross_origin()
-@jwt_required()
+@firebase_auth_required
 def get_all_bookings():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = request.current_user
 
     if not user or not user.is_admin:
         return jsonify({'error': 'Admins only'}), 403
@@ -172,7 +209,7 @@ def get_all_bookings():
     if user_filter:
         query = query.filter_by(user_id=user_filter)
     if status_filter:
-        query = query.filter_by(status=status_filter)
+        query = query.filter_by(booking_status=status_filter)
 
     bookings = query.all()
     return jsonify([
@@ -182,24 +219,22 @@ def get_all_bookings():
             'vehicle': b.vehicle.name,
             'start_date': b.start_date.isoformat(),
             'end_date': b.end_date.isoformat(),
-            'status': b.status,
+            'status': b.booking_status,
             'full_name': b.full_name,
             'phone': b.phone,
             'email': b.email,
             'pickup_option': b.pickup_option,
             'need_driver': b.need_driver,
-            'payment_method': b.payment_method
+            'payment_method': b.payment_method,
+            'total_price': b.total_price
         } for b in bookings
     ]), 200
 
-
-# ✅ Admin: Update booking status
 @booking_bp.route('/<int:booking_id>/status', methods=['PATCH'])
 @cross_origin()
-@jwt_required()
+@firebase_auth_required
 def update_booking_status(booking_id):
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
+    user = request.current_user
 
     if not user or not user.is_admin:
         return jsonify({'error': 'Admins only'}), 403
@@ -214,6 +249,6 @@ def update_booking_status(booking_id):
     if not booking:
         return jsonify({'error': 'Booking not found'}), 404
 
-    booking.status = new_status
+    booking.booking_status = new_status
     db.session.commit()
     return jsonify({'message': 'Booking status updated'}), 200
