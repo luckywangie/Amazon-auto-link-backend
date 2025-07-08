@@ -3,10 +3,14 @@ from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_cors import cross_origin
 from models import db, Booking, Vehicle, User
 from datetime import datetime
+import logging
 
 booking_bp = Blueprint('booking_bp', __name__)
 
-# Handle preflight requests
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 @booking_bp.before_request
 def handle_preflight():
     if request.method == "OPTIONS":
@@ -16,83 +20,86 @@ def handle_preflight():
         response.headers.add('Access-Control-Allow-Methods', "*")
         return response
 
-# ✅ User: Book a vehicle
 @booking_bp.route('/', methods=['POST', 'OPTIONS'])
 @cross_origin()
 @jwt_required()
 def create_booking():
-    user_id = get_jwt_identity()
-    user = User.query.get(user_id)
-
-    data = request.get_json()
-
-    # Required fields
-    vehicle_id = data.get('vehicle_id')
-    start_date = data.get('start_date')
-    end_date = data.get('end_date')
-    full_name = data.get('full_name')
-    phone = data.get('phone')
-    email = data.get('email')
-    id_number = data.get('id_number')
-    driving_license = data.get('driving_license')
-    pickup_option = data.get('pickup_option')
-    payment_method = data.get('payment_method')
-
-    # Optional fields
-    delivery_address = data.get('delivery_address')
-    need_driver = data.get('need_driver', False)
-    special_requests = data.get('special_requests', '')
-
-    # Validate required fields
-    if not all([vehicle_id, start_date, end_date, full_name, phone, email, 
-                id_number, driving_license, pickup_option, payment_method]):
-        return jsonify({'error': 'All required fields must be provided'}), 400
-
-    # Validate delivery address if delivery option is selected
-    if pickup_option == 'delivery' and not delivery_address:
-        return jsonify({'error': 'Delivery address is required for delivery option'}), 400
-
-    # Check if vehicle exists and is available
-    vehicle = Vehicle.query.get(vehicle_id)
-    if not vehicle or not vehicle.availability:
-        return jsonify({'error': 'Vehicle not available'}), 404
-
-    # Validate date format and logic
     try:
-        start = datetime.strptime(start_date, '%Y-%m-%d')
-        end = datetime.strptime(end_date, '%Y-%m-%d')
-    except ValueError:
-        return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+        user_id = get_jwt_identity()
+        user = User.query.get(user_id)
+        
+        if not user:
+            logger.error(f"User not found with ID: {user_id}")
+            return jsonify({'error': 'User not found'}), 404
 
-    if start >= end:
-        return jsonify({'error': 'End date must be after start date'}), 400
+        data = request.get_json()
+        logger.info(f"Received booking data: {data}")
 
-    # Check if dates are not in the past
-    if start.date() < datetime.now().date():
-        return jsonify({'error': 'Start date cannot be in the past'}), 400
+        # Required fields
+        required_fields = [
+            'vehicle_id', 'start_date', 'end_date', 'full_name', 'phone',
+            'email', 'id_number', 'driving_license', 'pickup_option',
+            'payment_method', 'total_price'
+        ]
+        
+        missing_fields = [field for field in required_fields if field not in data]
+        if missing_fields:
+            logger.error(f"Missing required fields: {missing_fields}")
+            return jsonify({'error': f'Missing required fields: {", ".join(missing_fields)}'}), 400
 
-    # Create new booking with all the information
-    new_booking = Booking(
-        user_id=user.id,
-        vehicle_id=vehicle_id,
-        start_date=start.date(),
-        end_date=end.date(),
-        full_name=full_name,
-        phone=phone,
-        email=email,
-        id_number=id_number,
-        driving_license=driving_license,
-        pickup_option=pickup_option,
-        delivery_address=delivery_address,
-        need_driver=need_driver,
-        special_requests=special_requests,
-        payment_method=payment_method,
-        status='pending'
-    )
-    
-    try:
+        # Validate vehicle
+        vehicle = Vehicle.query.get(data['vehicle_id'])
+        if not vehicle or not vehicle.availability:
+            logger.error(f"Vehicle not available: {data['vehicle_id']}")
+            return jsonify({'error': 'Vehicle not available'}), 404
+
+        # Validate dates
+        try:
+            start = datetime.strptime(data['start_date'], '%Y-%m-%d')
+            end = datetime.strptime(data['end_date'], '%Y-%m-%d')
+            
+            if start >= end:
+                logger.error("End date must be after start date")
+                return jsonify({'error': 'End date must be after start date'}), 400
+                
+            if start.date() < datetime.now().date():
+                logger.error("Start date cannot be in the past")
+                return jsonify({'error': 'Start date cannot be in the past'}), 400
+                
+        except ValueError as e:
+            logger.error(f"Invalid date format: {str(e)}")
+            return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
+
+        # Validate delivery address if needed
+        if data['pickup_option'] == 'delivery' and not data.get('delivery_address'):
+            logger.error("Delivery address required for delivery option")
+            return jsonify({'error': 'Delivery address is required for delivery option'}), 400
+
+        # Create booking
+        new_booking = Booking(
+            user_id=user.id,
+            vehicle_id=data['vehicle_id'],
+            start_date=start.date(),
+            end_date=end.date(),
+            full_name=data['full_name'],
+            phone=data['phone'],
+            email=data['email'],
+            id_number=data['id_number'],
+            driving_license=data['driving_license'],
+            pickup_option=data['pickup_option'],
+            delivery_address=data.get('delivery_address'),
+            need_driver=data.get('need_driver', False),
+            special_requests=data.get('special_requests', ''),
+            payment_method=data['payment_method'],
+            total_price=data['total_price'],
+            driver_fee=data.get('driver_fee', 0),
+            status='pending'
+        )
+
         db.session.add(new_booking)
         db.session.commit()
+        
+        logger.info(f"Booking created successfully: {new_booking.id}")
         
         return jsonify({
             'message': 'Booking request submitted successfully',
@@ -100,12 +107,11 @@ def create_booking():
             'status': 'pending'
         }), 201
         
-    except Exception as e:  # noqa: F841
+    except Exception as e:
         db.session.rollback()
-        return jsonify({'error': 'Failed to create booking. Please try again.'}), 500
+        logger.error(f"Error creating booking: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Failed to create booking: {str(e)}'}), 500
 
-
-# ✅ User: View own bookings
 @booking_bp.route('/my', methods=['GET'])
 @cross_origin()
 @jwt_required()
