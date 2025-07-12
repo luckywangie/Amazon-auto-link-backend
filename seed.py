@@ -106,10 +106,10 @@ def seed_data():
                         price=vehicle_data["price"],
                         availability=vehicle_data["availability"],
                         category_id=category.id,
-                        image_url=vehicle_data["image_url"]
+                        image_url=vehicle_data["image_url"]  # Ensure image_url is set
                     )
                     db.session.add(new_vehicle)
-                    print(f"✔ Vehicle '{vehicle_data['name']}' added.")
+                    print(f"✔ Vehicle '{vehicle_data['name']}' added with image URL.")
             else:
                 print(f"⚠ Category '{vehicle_data['category_name']}' not found, skipping vehicle '{vehicle_data['name']}'.")
 

@@ -38,7 +38,7 @@ def get_vehicles():
         'price': v.price,
         'availability': v.availability,
         'category': v.category.name if v.category else None,
-        'image_url': v.image_url  # Added image_url field
+        'image_url': v.image_url if v.image_url else None  # Ensure image_url is returned
     } for v in vehicles]), 200
 
 
@@ -56,7 +56,7 @@ def get_vehicle(vehicle_id):
         'price': vehicle.price,
         'availability': vehicle.availability,
         'category': vehicle.category.name if vehicle.category else None,
-        'image_url': vehicle.image_url  # Added image_url field
+        'image_url': vehicle.image_url if vehicle.image_url else None  # Ensure image_url is returned
     }), 200
 
 
@@ -77,17 +77,29 @@ def add_vehicle():
         if field not in data:
             return jsonify({'error': f'{field} is required'}), 400
 
+    # Validate image_url if provided
+    image_url = data.get('image_url')
+    if image_url and not isinstance(image_url, str):
+        return jsonify({'error': 'image_url must be a string'}), 400
+
     vehicle = Vehicle(
         name=data['name'],
         description=data['description'],
         price=data['price'],
         availability=data.get('availability', True),
         category_id=data['category_id'],
-        image_url=data.get('image_url')  # Added image_url field
+        image_url=image_url  # Store the image URL
     )
     db.session.add(vehicle)
     db.session.commit()
-    return jsonify({'message': 'Vehicle added successfully'}), 201
+    return jsonify({
+        'message': 'Vehicle added successfully',
+        'vehicle': {
+            'id': vehicle.id,
+            'name': vehicle.name,
+            'image_url': vehicle.image_url
+        }
+    }), 201
 
 
 # ✅ Admin: Update a vehicle
@@ -105,15 +117,27 @@ def update_vehicle(vehicle_id):
         return jsonify({'error': 'Vehicle not found'}), 404
 
     data = request.get_json()
+    
+    # Validate image_url if provided
+    if 'image_url' in data and not isinstance(data['image_url'], str):
+        return jsonify({'error': 'image_url must be a string'}), 400
+
     vehicle.name = data.get('name', vehicle.name)
     vehicle.description = data.get('description', vehicle.description)
     vehicle.price = data.get('price', vehicle.price)
     vehicle.availability = data.get('availability', vehicle.availability)
     vehicle.category_id = data.get('category_id', vehicle.category_id)
-    vehicle.image_url = data.get('image_url', vehicle.image_url)  # Added image_url field
+    vehicle.image_url = data.get('image_url', vehicle.image_url)  # Update image URL
 
     db.session.commit()
-    return jsonify({'message': 'Vehicle updated successfully'}), 200
+    return jsonify({
+        'message': 'Vehicle updated successfully',
+        'vehicle': {
+            'id': vehicle.id,
+            'name': vehicle.name,
+            'image_url': vehicle.image_url
+        }
+    }), 200
 
 
 # ✅ Admin: Delete a vehicle
