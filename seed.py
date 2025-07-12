@@ -34,7 +34,7 @@ def seed_data():
                 "price": 12000.0,
                 "availability": True,
                 "category_name": "SUV",
-                "image_url": "https://i.pinimg.com/736x/dd/fd/31/ddfd311cc524dcea4753a1259ea67756.jpg"
+                "image_url": "https://i.pinimg.com/736x/c4/f5/1b/c4f51b497cfd0ee9243a845058dda64c.jpg"
             },
             {
                 "name": "Honda CR-V",
@@ -42,7 +42,7 @@ def seed_data():
                 "price": 9500.0,
                 "availability": True,
                 "category_name": "SUV",
-                "image_url": "https://hondanews.com/en-US/photos/download/45a34b6c1f574b2a9222eddf01521f65"
+                "image_url": "https://i.pinimg.com/736x/a5/9c/a5/a59ca5d1cb5c114112ff837bf67be1d1.jpg"
             },
             {
                 "name": "Toyota Camry",
@@ -50,7 +50,7 @@ def seed_data():
                 "price": 7000.0,
                 "availability": True,
                 "category_name": "Sedan",
-                "image_url": "https://www.toyota.com/imgix/responsive/images/mlp/colorizer/2022/camry/1H1.png"
+                "image_url": "https://i.pinimg.com/736x/a4/9a/3a/a49a3ae24cde7e528650ae09436f233f.jpg"
             },
             {
                 "name": "Mercedes-Benz C-Class",
@@ -58,7 +58,7 @@ def seed_data():
                 "price": 15000.0,
                 "availability": True,
                 "category_name": "Sedan",
-                "image_url": "https://cdn.motor1.com/images/mgl/BEvvZ/s3/2022-mercedes-c-class.jpg"
+                "image_url": "https://i.pinimg.com/736x/73/e4/fd/73e4fd4077ce10f47eb458dea380cc2e.jpg"
             },
             {
                 "name": "Toyota Hiace",
@@ -66,7 +66,7 @@ def seed_data():
                 "price": 11000.0,
                 "availability": True,
                 "category_name": "Van",
-                "image_url": "https://toyota-africa.com/wp-content/uploads/2021/09/Hiace.png"
+                "image_url": "https://i.pinimg.com/1200x/64/5f/e3/645fe3e1bdc22e2782b4daba8a94ef5b.jpg"
             },
             {
                 "name": "Ford Transit",
@@ -74,7 +74,7 @@ def seed_data():
                 "price": 12500.0,
                 "availability": True,
                 "category_name": "Van",
-                "image_url": "https://media.ford.com/content/fordmedia/fna/us/en/products/vans/transit/_jcr_content/image.img.jpg"
+                "image_url": "https://i.pinimg.com/1200x/97/94/c2/9794c2cdf8219fddba4f7b47d6aff96d.jpg"
             },
             {
                 "name": "Isuzu N-Series",
@@ -82,7 +82,7 @@ def seed_data():
                 "price": 18000.0,
                 "availability": True,
                 "category_name": "Truck",
-                "image_url": "https://www.isuzu.com.au/media/1553/n-series-homepage.jpg"
+                "image_url": "https://i.pinimg.com/736x/87/01/35/8701358f1cba7b9fdce67b775654ecad.jpg"
             },
             {
                 "name": "Ford F-150",
@@ -90,7 +90,7 @@ def seed_data():
                 "price": 20000.0,
                 "availability": True,
                 "category_name": "Truck",
-                "image_url": "https://www.ford.com/is/image/content/dam/brand_ford/en_us/brand/resources/general/new-vehicles/f150/2023/3-2/23_FRD_F15_40622.tif?croppathe=1_3x2&wid=900"
+                "image_url": "https://i.pinimg.com/1200x/31/c1/7d/31c17df9ff612addc9293148bb193eca.jpg"
             }
         ]
 
