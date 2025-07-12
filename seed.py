@@ -26,7 +26,7 @@ def seed_data():
 
         db.session.commit()
 
-        # Vehicles data
+        # Updated vehicles data with better image URLs
         vehicles_data = [
             {
                 "name": "Toyota Land Cruiser",
@@ -34,7 +34,7 @@ def seed_data():
                 "price": 12000.0,
                 "availability": True,
                 "category_name": "SUV",
-                "image_url": "https://i.pinimg.com/736x/c4/f5/1b/c4f51b497cfd0ee9243a845058dda64c.jpg"
+                "image_url": "https://images.unsplash.com/photo-1606152421802-db97b9c7a11b?w=500&h=300&fit=crop"
             },
             {
                 "name": "Honda CR-V",
@@ -42,7 +42,7 @@ def seed_data():
                 "price": 9500.0,
                 "availability": True,
                 "category_name": "SUV",
-                "image_url": "https://i.pinimg.com/736x/a5/9c/a5/a59ca5d1cb5c114112ff837bf67be1d1.jpg"
+                "image_url": "https://images.unsplash.com/photo-1609521263047-f8f205293f24?w=500&h=300&fit=crop"
             },
             {
                 "name": "Toyota Camry",
@@ -50,7 +50,7 @@ def seed_data():
                 "price": 7000.0,
                 "availability": True,
                 "category_name": "Sedan",
-                "image_url": "https://i.pinimg.com/736x/a4/9a/3a/a49a3ae24cde7e528650ae09436f233f.jpg"
+                "image_url": "https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=500&h=300&fit=crop"
             },
             {
                 "name": "Mercedes-Benz C-Class",
@@ -58,7 +58,7 @@ def seed_data():
                 "price": 15000.0,
                 "availability": True,
                 "category_name": "Sedan",
-                "image_url": "https://i.pinimg.com/736x/73/e4/fd/73e4fd4077ce10f47eb458dea380cc2e.jpg"
+                "image_url": "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?w=500&h=300&fit=crop"
             },
             {
                 "name": "Toyota Hiace",
@@ -66,7 +66,7 @@ def seed_data():
                 "price": 11000.0,
                 "availability": True,
                 "category_name": "Van",
-                "image_url": "https://i.pinimg.com/1200x/64/5f/e3/645fe3e1bdc22e2782b4daba8a94ef5b.jpg"
+                "image_url": "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&h=300&fit=crop"
             },
             {
                 "name": "Ford Transit",
@@ -74,7 +74,7 @@ def seed_data():
                 "price": 12500.0,
                 "availability": True,
                 "category_name": "Van",
-                "image_url": "https://i.pinimg.com/1200x/97/94/c2/9794c2cdf8219fddba4f7b47d6aff96d.jpg"
+                "image_url": "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=500&h=300&fit=crop"
             },
             {
                 "name": "Isuzu N-Series",
@@ -82,7 +82,7 @@ def seed_data():
                 "price": 18000.0,
                 "availability": True,
                 "category_name": "Truck",
-                "image_url": "https://i.pinimg.com/736x/87/01/35/8701358f1cba7b9fdce67b775654ecad.jpg"
+                "image_url": "https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=500&h=300&fit=crop"
             },
             {
                 "name": "Ford F-150",
@@ -90,7 +90,7 @@ def seed_data():
                 "price": 20000.0,
                 "availability": True,
                 "category_name": "Truck",
-                "image_url": "https://i.pinimg.com/1200x/31/c1/7d/31c17df9ff612addc9293148bb193eca.jpg"
+                "image_url": "https://images.unsplash.com/photo-1593941707874-ef25b8b4a92b?w=500&h=300&fit=crop"
             }
         ]
 
