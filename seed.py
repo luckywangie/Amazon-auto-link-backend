@@ -26,7 +26,7 @@ def seed_data():
 
         db.session.commit()
 
-        # Updated vehicles data with valid Unsplash image URLs
+        # Updated vehicles data with better image URLs
         vehicles_data = [
             {
                 "name": "Toyota Land Cruiser",
