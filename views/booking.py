@@ -252,3 +252,63 @@ def update_booking_status(booking_id):
     booking.booking_status = new_status
     db.session.commit()
     return jsonify({'message': 'Booking status updated'}), 200
+
+@booking_bp.route('/<int:booking_id>', methods=['GET'])
+@cross_origin()
+@firebase_auth_required
+def get_booking(booking_id):
+    """Get a specific booking by ID"""
+    try:
+        user = request.current_user
+        
+        if not user:
+            logger.error("User not found in request context")
+            return jsonify({'error': 'User not found'}), 404
+
+        # Get the booking - users can only see their own bookings unless they're admin
+        if user.is_admin:
+            booking = Booking.query.get(booking_id)
+        else:
+            booking = Booking.query.filter_by(id=booking_id, user_id=user.id).first()
+
+        if not booking:
+            logger.error(f"Booking not found: {booking_id}")
+            return jsonify({'error': 'Booking not found'}), 404
+
+        # Return booking details with vehicle information
+        booking_data = {
+            'id': booking.id,
+            'user_id': booking.user_id,
+            'vehicle_id': booking.vehicle_id,
+            'start_date': booking.start_date.isoformat(),
+            'end_date': booking.end_date.isoformat(),
+            'full_name': booking.full_name,
+            'phone': booking.phone,
+            'email': booking.email,
+            'id_number': booking.id_number,
+            'driving_license': booking.driving_license,
+            'pickup_option': booking.pickup_option,
+            'delivery_address': booking.delivery_address,
+            'need_driver': booking.need_driver,
+            'special_requests': booking.special_requests,
+            'payment_method': booking.payment_method,
+            'total_price': float(booking.total_price),
+            'driver_fee': float(booking.driver_fee) if booking.driver_fee else 0,
+            'booking_status': booking.booking_status,
+            'created_at': booking.created_at.isoformat() if hasattr(booking, 'created_at') else None,
+            'vehicle': {
+                'id': booking.vehicle.id,
+                'name': booking.vehicle.name,
+                'description': booking.vehicle.description,
+                'price': float(booking.vehicle.price),
+                'image_url': booking.vehicle.image_url if hasattr(booking.vehicle, 'image_url') else None,
+                'availability': booking.vehicle.availability
+            }
+        }
+        
+        logger.info(f"Booking retrieved successfully: {booking_id}")
+        return jsonify(booking_data), 200
+        
+    except Exception as e:
+        logger.error(f"Error fetching booking {booking_id}: {str(e)}", exc_info=True)
+        return jsonify({'error': f'Failed to fetch booking: {str(e)}'}), 500
