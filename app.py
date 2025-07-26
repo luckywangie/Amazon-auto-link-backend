@@ -5,7 +5,6 @@ from flask_cors import CORS
 from models import db
 from views.firebase_config import initialize_firebase
 
-
 # Blueprint imports
 from views.auth import auth_bp
 from views.user import user_bp
@@ -41,8 +40,8 @@ app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(user_bp, url_prefix='/users')
 app.register_blueprint(category_bp, url_prefix='/categories')
 app.register_blueprint(vehicle_bp, url_prefix='/vehicles')
-app.register_blueprint(booking_bp, url_prefix='/booking')
+app.register_blueprint(booking_bp, url_prefix='/api/bookings')  # ✅ Fixed URL prefix
 
 # Run Server
-if __name__ == '_main_':
+if __name__ == '__main__':  # ✅ Fixed main check
     app.run(debug=True)
