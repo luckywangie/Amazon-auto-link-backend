@@ -15,6 +15,10 @@ def firebase_auth_required(f):
     """Custom decorator for Firebase authentication"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        # Allow preflight requests to pass through
+        if request.method == 'OPTIONS':
+            return jsonify({'message': 'Preflight OK'}), 200
+
         auth_header = request.headers.get('Authorization')
         if not auth_header:
             return jsonify({'error': 'No authorization header'}), 401
