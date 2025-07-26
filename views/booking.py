@@ -51,7 +51,7 @@ def firebase_auth_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-@booking_bp.route('/', methods=['POST'])
+@booking_bp.route('/', methods=['POST', 'OPTIONS'])
 @firebase_auth_required
 def create_booking():
     try:
