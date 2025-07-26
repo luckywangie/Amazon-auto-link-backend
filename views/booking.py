@@ -1,5 +1,4 @@
 from flask import Blueprint, request, jsonify
-from flask_cors import cross_origin
 from models import db, Booking, Vehicle, User
 from views.firebase_config import verify_firebase_token
 from datetime import datetime
@@ -21,19 +20,15 @@ def firebase_auth_required(f):
             return jsonify({'error': 'No authorization header'}), 401
         
         try:
-            # Extract token from "Bearer <token>"
             token = auth_header.split(' ')[1]
             decoded_token = verify_firebase_token(token)
-            
             if not decoded_token:
                 return jsonify({'error': 'Invalid token'}), 401
-            
-            # Get or create user based on Firebase UID
+
             firebase_uid = decoded_token['uid']
             user = User.query.filter_by(firebase_uid=firebase_uid).first()
-            
+
             if not user:
-                # Create user if doesn't exist
                 user = User(
                     firebase_uid=firebase_uid,
                     name=decoded_token.get('name', ''),
@@ -42,33 +37,21 @@ def firebase_auth_required(f):
                 )
                 db.session.add(user)
                 db.session.commit()
-            
-            # Add user to request context
+
             request.current_user = user
-            
+
         except Exception as e:
             logger.error(f"Authentication error: {str(e)}")
             return jsonify({'error': 'Authentication failed'}), 401
-        
+
         return f(*args, **kwargs)
     return decorated_function
 
-@booking_bp.before_request
-def handle_preflight():
-    if request.method == "OPTIONS":
-        response = jsonify()
-        response.headers.add("Access-Control-Allow-Origin", "*")
-        response.headers.add('Access-Control-Allow-Headers', "*")
-        response.headers.add('Access-Control-Allow-Methods', "*")
-        return response
-
-@booking_bp.route('/', methods=['POST', 'OPTIONS'])
-@cross_origin()
+@booking_bp.route('/', methods=['POST'])
 @firebase_auth_required
 def create_booking():
     try:
         user = request.current_user
-        
         if not user:
             logger.error("User not found in request context")
             return jsonify({'error': 'User not found'}), 404
@@ -76,47 +59,34 @@ def create_booking():
         data = request.get_json()
         logger.info(f"Received booking data: {data}")
 
-        # Required fields
         required_fields = [
             'vehicle_id', 'start_date', 'end_date', 'full_name', 'phone',
             'email', 'id_number', 'driving_license', 'pickup_option',
             'payment_method', 'total_price'
         ]
-        
         missing_fields = [field for field in required_fields if field not in data]
         if missing_fields:
             logger.error(f"Missing required fields: {missing_fields}")
             return jsonify({'error': f'Missing required fields: {", ".join(missing_fields)}'}), 400
 
-        # Validate vehicle
         vehicle = Vehicle.query.get(data['vehicle_id'])
         if not vehicle or not vehicle.availability:
             logger.error(f"Vehicle not available: {data['vehicle_id']}")
             return jsonify({'error': 'Vehicle not available'}), 404
 
-        # Validate dates
         try:
             start = datetime.strptime(data['start_date'], '%Y-%m-%d')
             end = datetime.strptime(data['end_date'], '%Y-%m-%d')
-            
             if start >= end:
-                logger.error("End date must be after start date")
                 return jsonify({'error': 'End date must be after start date'}), 400
-                
             if start.date() < datetime.now().date():
-                logger.error("Start date cannot be in the past")
                 return jsonify({'error': 'Start date cannot be in the past'}), 400
-                
         except ValueError as e:
-            logger.error(f"Invalid date format: {str(e)}")
             return jsonify({'error': 'Invalid date format. Use YYYY-MM-DD'}), 400
 
-        # Validate delivery address if needed
         if data['pickup_option'] == 'delivery' and not data.get('delivery_address'):
-            logger.error("Delivery address required for delivery option")
             return jsonify({'error': 'Delivery address is required for delivery option'}), 400
 
-        # Create booking
         new_booking = Booking(
             user_id=user.id,
             vehicle_id=data['vehicle_id'],
@@ -134,27 +104,25 @@ def create_booking():
             payment_method=data['payment_method'],
             total_price=data['total_price'],
             driver_fee=data.get('driver_fee', 0),
-            booking_status='pending'  # Use booking_status instead of status
+            booking_status='pending'
         )
 
         db.session.add(new_booking)
         db.session.commit()
-        
+
         logger.info(f"Booking created successfully: {new_booking.id}")
-        
         return jsonify({
             'message': 'Booking request submitted successfully',
             'booking_id': new_booking.id,
             'status': 'pending'
         }), 201
-        
+
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error creating booking: {str(e)}", exc_info=True)
         return jsonify({'error': f'Failed to create booking: {str(e)}'}), 500
 
 @booking_bp.route('/my', methods=['GET'])
-@cross_origin()
 @firebase_auth_required
 def get_my_bookings():
     user = request.current_user
@@ -176,7 +144,6 @@ def get_my_bookings():
     ]), 200
 
 @booking_bp.route('/<int:booking_id>/cancel', methods=['PATCH'])
-@cross_origin()
 @firebase_auth_required
 def cancel_booking(booking_id):
     user = request.current_user
@@ -193,11 +160,9 @@ def cancel_booking(booking_id):
     return jsonify({'message': 'Booking cancelled'}), 200
 
 @booking_bp.route('/', methods=['GET'])
-@cross_origin()
 @firebase_auth_required
 def get_all_bookings():
     user = request.current_user
-
     if not user or not user.is_admin:
         return jsonify({'error': 'Admins only'}), 403
 
@@ -205,7 +170,6 @@ def get_all_bookings():
     status_filter = request.args.get('status')
 
     query = Booking.query
-
     if user_filter:
         query = query.filter_by(user_id=user_filter)
     if status_filter:
@@ -231,11 +195,9 @@ def get_all_bookings():
     ]), 200
 
 @booking_bp.route('/<int:booking_id>/status', methods=['PATCH'])
-@cross_origin()
 @firebase_auth_required
 def update_booking_status(booking_id):
     user = request.current_user
-
     if not user or not user.is_admin:
         return jsonify({'error': 'Admins only'}), 403
 
@@ -254,28 +216,17 @@ def update_booking_status(booking_id):
     return jsonify({'message': 'Booking status updated'}), 200
 
 @booking_bp.route('/<int:booking_id>', methods=['GET'])
-@cross_origin()
 @firebase_auth_required
 def get_booking(booking_id):
-    """Get a specific booking by ID"""
     try:
         user = request.current_user
-        
         if not user:
-            logger.error("User not found in request context")
             return jsonify({'error': 'User not found'}), 404
 
-        # Get the booking - users can only see their own bookings unless they're admin
-        if user.is_admin:
-            booking = Booking.query.get(booking_id)
-        else:
-            booking = Booking.query.filter_by(id=booking_id, user_id=user.id).first()
-
+        booking = Booking.query.get(booking_id) if user.is_admin else Booking.query.filter_by(id=booking_id, user_id=user.id).first()
         if not booking:
-            logger.error(f"Booking not found: {booking_id}")
             return jsonify({'error': 'Booking not found'}), 404
 
-        # Return booking details with vehicle information
         booking_data = {
             'id': booking.id,
             'user_id': booking.user_id,
@@ -305,10 +256,9 @@ def get_booking(booking_id):
                 'availability': booking.vehicle.availability
             }
         }
-        
-        logger.info(f"Booking retrieved successfully: {booking_id}")
+
         return jsonify(booking_data), 200
-        
+
     except Exception as e:
         logger.error(f"Error fetching booking {booking_id}: {str(e)}", exc_info=True)
         return jsonify({'error': f'Failed to fetch booking: {str(e)}'}), 500
