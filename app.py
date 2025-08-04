@@ -20,7 +20,7 @@ app = Flask(__name__)
 
 # Database Configuration
 basedir = os.path.abspath(os.path.dirname(__file__))
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://alc_db_user:AubymIH05tNXldoGMXW7I0EVDD8TJR8i@dpg-d1iqen6mcj7s73enc3kg-a.oregon-postgres.render.com/alc_db"
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://ach_db_user:8CpLfVmu1LGoU2oE1hbwPX9RHLb7dL9E@dpg-d28foqhr0fns73dcr6f0-a.oregon-postgres.render.com/ach_db"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Initialize Extensions
