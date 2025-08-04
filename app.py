@@ -27,21 +27,16 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db.init_app(app)
 migrate = Migrate(app, db)
 
-# CORS Configuration
-CORS(app, 
-     origins=['http://localhost:5173', 'http://localhost:3000', 'https://your-frontend-domain.com'],
-     supports_credentials=True,
-     allow_headers=['Content-Type', 'Authorization'],
-     methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS']
-)
+# CORS Configuration (updated for development/testing)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
 # Register Blueprints
 app.register_blueprint(auth_bp, url_prefix='/auth')
 app.register_blueprint(user_bp, url_prefix='/users')
 app.register_blueprint(category_bp, url_prefix='/categories')
 app.register_blueprint(vehicle_bp, url_prefix='/vehicles')
-app.register_blueprint(booking_bp, url_prefix='/api/bookings')  # ✅ Fixed URL prefix
+app.register_blueprint(booking_bp, url_prefix='/api/bookings')
 
 # Run Server
-if __name__ == '__main__':  # ✅ Fixed main check
+if __name__ == '__main__':
     app.run(debug=True)
